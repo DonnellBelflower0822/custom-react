@@ -1,11 +1,11 @@
-const element1 = React.createElement(
+const element1 = CustomReact.createElement(
   'div',
   {
     className: 'title',
     style: { color: 'red' }
   },
-  React.createElement('span', null, 'hello'),
+    CustomReact.createElement('span', null, 'hello'),
   'world'
 )
 
-ReactDOM.render(element1, document.getElementById('root'))
+CustomReact.render(element1, document.getElementById('root'))
