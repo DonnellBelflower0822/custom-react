@@ -1,35 +1,35 @@
-import {Component} from "./react/Component"
+import { Component } from "./react/Component";
 
-export type FunctionComponent<T = object> = (props: T) => ReactNode
+export type FunctionComponent<T = object> = (props: T) => ReactNode;
 
-export type ReactNodeType = string | Symbol | Component | FunctionComponent
+export type ReactNodeType = string | Symbol | Component | FunctionComponent;
 
-type extendDOM = {}
+type extendDOM = {};
 
-export type DOM = (HTMLElement & extendDOM) | (Text & extendDOM)
+export type DOM = (HTMLElement & extendDOM) | (Text & extendDOM);
 
 export type Props = {
-    children?: ReactNode[] | ReactNode
-    content?: string | number
-    [x: string]: any
-}
+  children?: ReactNode[] | ReactNode;
+  content?: string | number;
+  [x: string]: any;
+};
 
 export interface ReactNode {
-    type: ReactNodeType,
-    props: Props,
-    key?: string;
+  type: ReactNodeType,
+  props: Props,
+  key?: string;
 
-    // 真实的dom
-    dom?: DOM;
-    instance?: Component
+  // 真实的dom
+  dom?: DOM;
+  instance?: Component;
 }
 
 export interface ClassReactNode extends Omit<ReactNode, 'type'> {
-    type: typeof Component & {
-        render: () => ReactNode
-    }
+  type: typeof Component & {
+    render: () => ReactNode;
+  };
 }
 
 export interface FunctionReactNode extends Omit<ReactNode, 'type'> {
-    type: FunctionComponent
+  type: FunctionComponent;
 }

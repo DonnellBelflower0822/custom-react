@@ -1,11 +1,11 @@
-import {createElement} from "./react/createElement"
-import {Component} from "./react/Component"
-import {render} from "./reactDOM/render"
+import { createElement } from "./react/createElement";
+import { Component } from "./react/Component";
+import { render } from "./reactDOM/render";
 
 const customReact = {
-    createElement,
-    render,
-    Component
-}
+  createElement,
+  render,
+  Component
+};
 
-export default customReact
+export default customReact;

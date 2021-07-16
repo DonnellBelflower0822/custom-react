@@ -1,1 +1,1 @@
-export const TEXT = Symbol()
+export const TEXT = Symbol();
