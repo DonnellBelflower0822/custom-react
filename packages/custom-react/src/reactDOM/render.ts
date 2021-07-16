@@ -1,6 +1,7 @@
-import {DOM, ReactNode} from "../interface";
+import {ClassReactNode, DOM, FunctionReactNode, ReactNode} from "../interface";
 import {TEXT} from "../constant";
 import {updateProps} from "./updateProps";
+import {Component} from "../react/Component";
 
 export function render(reactNode: ReactNode, container: HTMLElement) {
     mount(reactNode, container)
@@ -18,11 +19,48 @@ function renderChildren(children: ReactNode[], container: HTMLElement) {
     })
 }
 
-function createDOM(reactNode: ReactNode) {
+// 挂载类组件
+function mountClassComponent(reactNode: ClassReactNode) {
+    const {type: Type, props} = reactNode
+
+    // 创建实例
+    const instance = new Type(props)
+
+    reactNode.instance = instance
+
+    // 调用render
+    const renderReactNode = (instance as any as typeof Component & { render: () => ReactNode }).render()
+
+    // 生成真实dom
+    const dom = createDOM(renderReactNode)
+
+    instance.dom = dom
+
+    return dom
+}
+
+// 挂载函数组件
+function mountFunctionComponent(reactNode: FunctionReactNode) {
+    const {type, props} = reactNode
+
+    const renderReactNode = type(props)
+    // 生成真实dom
+    const dom = createDOM(renderReactNode)
+
+    reactNode.dom = dom
+
+    return dom
+}
+
+function createDOM(reactNode: ReactNode): DOM {
     const {type, props: {children, content}, props} = reactNode
 
     if (typeof type === 'function') {
+        if ((type as any as typeof Component).isReactComponent) {
+            return mountClassComponent(reactNode as any as ClassReactNode)
+        }
 
+        return mountFunctionComponent(reactNode as any as FunctionReactNode)
     }
 
     let dom: DOM

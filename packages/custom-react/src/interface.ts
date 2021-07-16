@@ -1,4 +1,8 @@
-export type ReactNodeType = string | Symbol | ReactNode
+import {Component} from "./react/Component"
+
+export type FunctionComponent<T = object> = (props: T) => ReactNode
+
+export type ReactNodeType = string | Symbol | Component | FunctionComponent
 
 type extendDOM = {}
 
@@ -16,5 +20,16 @@ export interface ReactNode {
     key?: string;
 
     // 真实的dom
-    dom?: DOM
+    dom?: DOM;
+    instance?: Component
+}
+
+export interface ClassReactNode extends Omit<ReactNode, 'type'> {
+    type: typeof Component & {
+        render: () => ReactNode
+    }
+}
+
+export interface FunctionReactNode extends Omit<ReactNode, 'type'> {
+    type: FunctionComponent
 }
