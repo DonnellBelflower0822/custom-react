@@ -4,7 +4,11 @@ export type FunctionComponent<T = object> = (props: T) => ReactNode;
 
 export type ReactNodeType = string | Symbol | Component | FunctionComponent;
 
-type extendDOM = {};
+type extendDOM = {
+  store?: {
+    [eventType: string]: () => void;
+  };
+};
 
 export type DOM = (HTMLElement & extendDOM) | (Text & extendDOM);
 

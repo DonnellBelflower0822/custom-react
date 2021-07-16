@@ -1,4 +1,5 @@
 import { Props } from "../interface";
+import { addEvent } from './event';
 
 export function updateProps(dom: HTMLElement, newProps: Props, oldProps?: Props) {
   if (!newProps) {
@@ -25,7 +26,7 @@ export function updateProps(dom: HTMLElement, newProps: Props, oldProps?: Props)
     }
 
     if (key.startsWith('on')) {
-      // addEvent
+      addEvent(dom, key.toLocaleLowerCase(), newProps[key]);
       continue;
     }
 

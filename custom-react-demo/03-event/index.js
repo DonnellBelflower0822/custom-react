@@ -16,6 +16,10 @@ class Counter extends CustomReact.Component {
     this.state = { number: 0 }
   }
 
+  click(e) {
+    console.log(e, this)
+  }
+
   render() {
     const { number } = this.state
     return CustomReact.createElement('div', {}, [
@@ -23,7 +27,9 @@ class Counter extends CustomReact.Component {
       CustomReact.createElement('p', {}, 'hello ' + number),
       CustomReact.createElement(
         'button',
-        {},
+        {
+          onClick: this.click
+        },
         CustomReact.createElement('span', {}, '按钮')
       )
     ])
