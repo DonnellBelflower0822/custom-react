@@ -1,5 +1,6 @@
 import {DOM, ReactNode} from "../interface";
 import {TEXT} from "../constant";
+import {updateProps} from "./updateProps";
 
 export function render(reactNode: ReactNode, container: HTMLElement) {
     mount(reactNode, container)
@@ -28,8 +29,13 @@ function createDOM(reactNode: ReactNode) {
     if (type === TEXT) {
         dom = document.createTextNode(typeof content === 'string' ? content : `${content}`)
     } else if (typeof type === "string") {
+        // 创建节点
         dom = document.createElement(type)
 
+        // 处理属性
+        updateProps(dom, props)
+
+        // 处理子级
         if (Array.isArray(children)) {
             renderChildren(children, dom)
         } else {
