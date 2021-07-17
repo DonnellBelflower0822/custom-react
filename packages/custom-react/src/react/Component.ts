@@ -125,6 +125,7 @@ export class Component<P = object, S = object> {
   updater: Updater<P, S>;
   lastRenderReactNode: ReactNode;
   ownReactNode: ClassReactNode;
+  ref?: any;
 
   constructor(props: P) {
     this.props = props;

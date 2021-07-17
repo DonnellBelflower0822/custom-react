@@ -6,7 +6,11 @@
 
 // import Com from './components/lifecycle'
 
-import Com from './components/hook/useState'
+// import Com from './components/hook/useState'
+// import Com from './components/hook/useEffect'
+// import Com from './components/hook/useNewState'
+// import Com from './components/hook/setState'
+import Com from './components/hook/useRequest'
 
 function App() {
   return (

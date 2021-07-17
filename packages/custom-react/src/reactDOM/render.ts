@@ -35,6 +35,11 @@ function mountClassComponent(reactNode: ClassReactNode) {
   // 创建实例。走类组件的constructor
   const instance = new Type(props);
 
+  if (reactNode.ref) {
+    reactNode.ref.current = instance;
+    instance.ref = reactNode.ref;
+  }
+
   //@ts-ignore
   if (Type.contextType) {
     //@ts-ignore

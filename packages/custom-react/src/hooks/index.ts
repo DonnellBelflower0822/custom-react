@@ -9,6 +9,62 @@ function fullUpdate() {
   scheduleUpdate();
 }
 
+// 使用宏任务。浏览器ui渲染后才执行
+export function useEffect(cb, deps) {
+  if (hookState[hookIndex]) {
+    const [destoryFunction, lastDeps] = hookState[hookIndex];
+    const same = deps?.every((item, index) => item === lastDeps[index]);
+
+    if (same) {
+      hookIndex++;
+    } else {
+      destoryFunction?.();
+      setTimeout(() => {
+        const destoryFunction = cb();
+        hookState[hookIndex++] = [destoryFunction, deps];
+      });
+    }
+  } else {
+    setTimeout(() => {
+      const destoryFunction = cb();
+      hookState[hookIndex++] = [destoryFunction, deps];
+    });
+  }
+}
+
+// 微任务。在浏览器ui渲染之前执行: queueMicrotask
+export function useLayoutEffect(cb, deps) {
+  if (hookState[hookIndex]) {
+    const [destoryFunction, lastDeps] = hookState[hookIndex];
+    const same = deps?.every((item, index) => item === lastDeps[index]);
+
+    if (same) {
+      hookIndex++;
+    } else {
+      destoryFunction?.();
+      queueMicrotask(() => {
+        const destoryFunction = cb();
+        hookState[hookIndex++] = [destoryFunction, deps];
+      });
+    }
+  } else {
+    queueMicrotask(() => {
+      const destoryFunction = cb();
+      hookState[hookIndex++] = [destoryFunction, deps];
+    });
+  }
+}
+
+export function useRef(initialState) {
+  hookState[hookIndex] = hookState[hookIndex] || { current: initialState };
+  return hookState[hookIndex++];
+}
+
+// useImperativeHandle 可以让你在使用 ref 时自定义暴露给父组件的实例值
+export function useImperativeHandle(ref, factoy) {
+  ref.current = factoy();
+}
+
 type SetStateFn<T> = (state: T) => T;
 type SetState<T> = (state: T | SetStateFn<T>) => void;
 type GetState<T> = () => T;
