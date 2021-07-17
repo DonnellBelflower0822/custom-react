@@ -23,7 +23,7 @@ export function createElement(type, props: Props = {}, ...children): ReactNode {
 
 function wrapChildren(child: string | number | ReactNode): ReactNode {
   if (typeof child === 'string' || typeof child === 'number') {
-    return { type: TEXT, props: { content: child } };
+    return { type: TEXT, props: { content: typeof child === 'string' ? child : `${child}` } };
   }
 
   return child;

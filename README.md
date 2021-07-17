@@ -7,3 +7,6 @@
 - scripts：运行命令
 
 ## 一个功能一个提交
+
+
+Object.freeze

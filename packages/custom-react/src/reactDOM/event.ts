@@ -1,4 +1,5 @@
 import { DOM } from '../interface';
+import { updateQueue } from '../react/Component';
 
 export function addEvent(dom: DOM, type: string, listener: () => void) {
   // 将事件处理放到dom身上
@@ -30,6 +31,8 @@ function resetSyntheticEvent() {
 
 // 同一处理事件触发
 function dispatchEvent(e) {
+  updateQueue.isBatchingUpdate = true;
+
   const { type } = e;
   let { target } = e;
   const eventType = `on${type}`;
@@ -41,7 +44,7 @@ function dispatchEvent(e) {
     const { store } = target;
     if (store?.[eventType]) {
       // 原生事件的this为undefined
-      const listener = store[eventType]
+      const listener = store[eventType];
       listener(syntheticEvent);
     }
 
@@ -50,4 +53,5 @@ function dispatchEvent(e) {
 
   resetSyntheticEvent();
 
+  updateQueue.batchUpdate();
 }

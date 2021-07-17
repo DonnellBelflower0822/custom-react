@@ -14,7 +14,7 @@ export type DOM = (HTMLElement & extendDOM) | (Text & extendDOM);
 
 export type Props = {
   children?: ReactNode[] | ReactNode;
-  content?: string | number;
+  content?: string;
   [x: string]: any;
 };
 

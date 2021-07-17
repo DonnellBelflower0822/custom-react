@@ -2,6 +2,7 @@ import { ClassReactNode, DOM, FunctionReactNode, ReactNode } from "../interface"
 import { TEXT } from "../constant";
 import { updateProps } from "./updateProps";
 import { Component } from "../react/Component";
+import { findDOM } from './findDOM';
 
 export function render(reactNode: ReactNode, container: HTMLElement) {
   mount(reactNode, container);
@@ -30,6 +31,8 @@ function mountClassComponent(reactNode: ClassReactNode) {
 
   // 调用render
   const renderReactNode = (instance as any as typeof Component & { render: () => ReactNode; }).render();
+
+  instance.lastRenderReactNode = renderReactNode;
 
   // 生成真实dom
   const dom = createDOM(renderReactNode);
@@ -84,4 +87,91 @@ function createDOM(reactNode: ReactNode): DOM {
   reactNode.dom = dom;
 
   return dom;
+}
+
+
+export function compareTwoVDom(parentDOM: HTMLElement, oldReactNode: ReactNode, newReactNode: ReactNode, nextDOM?: HTMLElement) {
+  // 新旧节点都为null
+  if (!newReactNode && !oldReactNode) {
+    return;
+  }
+
+  // 新的为null，旧的不为null
+  if (!newReactNode && oldReactNode) {
+    const oldDom = findDOM(oldReactNode);
+
+    if (oldDom) {
+      parentDOM.removeChild(oldDom);
+    }
+
+    return;
+  }
+
+  // 老的为null，新的不为null
+  if (!oldReactNode && newReactNode) {
+    const newDOM = createDOM(newReactNode);
+
+    parentDOM.insertBefore(newDOM, nextDOM || null);
+
+    return;
+  }
+
+  // 新旧都有，但类型不一样
+  if (oldReactNode.type !== newReactNode.type) {
+    const oldDom = findDOM(oldReactNode);
+    const newDOM = createDOM(newReactNode);
+
+    parentDOM.replaceChild(newDOM, oldDom);
+    return;
+  }
+
+  updateElement(oldReactNode, newReactNode);
+}
+
+function updateElement(oldReactNode: ReactNode, newReactNode: ReactNode) {
+  const { type } = oldReactNode;
+  // 文本
+  if (type === TEXT) {
+    const currentDOM = newReactNode.dom = oldReactNode.dom;
+    currentDOM.textContent = newReactNode.props.content;
+    return;
+  }
+
+  // 元素
+  if (typeof type === 'string') {
+    const currentDOM = newReactNode.dom = oldReactNode.dom;
+    // 更新属性
+    updateProps(currentDOM as HTMLElement, newReactNode.props, oldReactNode.props);
+
+    updateChildren(currentDOM, oldReactNode.props.children, newReactNode.props.children);
+    return;
+  }
+
+  if ((type as any as typeof Component).isReactComponent) {
+    updateClassComponent(oldReactNode, newReactNode);
+  } else {
+    updateFunctionComponent(oldReactNode, newReactNode);
+  }
+}
+
+function updateClassComponent(oldReactNode: ReactNode, newReactNode: ReactNode) {
+  const instance = newReactNode.instance = oldReactNode.instance;
+
+  instance.updater.emitUpdate(newReactNode.props)
+}
+function updateFunctionComponent(oldReactNode: ReactNode, newReactNode: ReactNode) { }
+
+function getArray<T>(item): T[] {
+  return Array.isArray(item) ? item : [item];
+}
+
+function updateChildren(parentDOM: DOM, oldReactNodeChildren: ReactNode | ReactNode[], newReactNodeChildren: ReactNode | ReactNode[]) {
+  oldReactNodeChildren = getArray<ReactNode>(oldReactNodeChildren);
+  newReactNodeChildren = getArray<ReactNode>(newReactNodeChildren);
+
+  const maxLength = Math.max(oldReactNodeChildren.length, newReactNodeChildren.length);
+  for (let i = 0; i < maxLength; i++) {
+    const newDOM = oldReactNodeChildren.find((item, index) => index > i && item && item.dom);
+    compareTwoVDom(parentDOM as HTMLElement, oldReactNodeChildren[i], newReactNodeChildren[i], (newDOM && newDOM.dom) as HTMLElement);
+  }
 }
