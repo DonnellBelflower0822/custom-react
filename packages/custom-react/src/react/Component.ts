@@ -1,4 +1,4 @@
-import { DOM, ReactNode } from "../interface";
+import { ClassReactNode, DOM, ReactNode } from "../interface";
 import { findDOM } from '../reactDOM/findDOM';
 import { compareTwoVDom } from '../reactDOM/render';
 
@@ -81,18 +81,34 @@ class Updater<P = object, S = object> {
   }
 }
 
+// 不管组件是否要更新，props和state都要更新
 function shouldUpdate<P, S>(instance: Component<P, S>, newProps: P, nextState: S, callbacks: SetStateCallback[]) {
-  // 比较state和props是否一样
-
-  if (newProps) {
-    instance.props = newProps;
+  //@ts-ignore
+  const { getDerivedStateFromProps } = instance.ownReactNode.type;
+  if (getDerivedStateFromProps) {
+    const partialState = getDerivedStateFromProps(newProps, instance.state);
+    nextState = {
+      ...nextState,
+      ...partialState,
+    };
   }
 
   // 设置最新的state
   instance.state = nextState;
 
+  // shouldComponentUpdate(组件是否要更新)返回false，则不需要更新
+
+  //@ts-ignore
+  if (instance.shouldComponentUpdate && !instance.shouldComponentUpdate(newProps, nextState)) {
+    return;
+  }
+
+  if (newProps) {
+    instance.props = newProps;
+  }
+
   // 更新组件
-  instance.updateComponent();
+  instance.forceUpdate();
 
   callbacks.forEach(cb => {
     cb();
@@ -108,8 +124,7 @@ export class Component<P = object, S = object> {
 
   updater: Updater<P, S>;
   lastRenderReactNode: ReactNode;
-
-  componentWillMount?: () => void;
+  ownReactNode: ClassReactNode;
 
   constructor(props: P) {
     this.props = props;
@@ -122,10 +137,14 @@ export class Component<P = object, S = object> {
 
   dom?: DOM;
 
-  updateComponent() {
+  forceUpdate() {
+    // this.componentWillUpdate?.();
     const renderReactNode = (this as any as typeof Component & { render: () => ReactNode; }).render();
 
     const oldDom = findDOM(this.lastRenderReactNode);
+
+    // @ts-ignore
+    const extrArgs = this.getSnapshotBeforeUpdate?.();
 
     compareTwoVDom(
       oldDom ? oldDom.parentNode : null,
@@ -134,5 +153,61 @@ export class Component<P = object, S = object> {
     );
 
     this.lastRenderReactNode = renderReactNode;
+    //@ts-ignore
+    this.componentDidUpdate?.(prevProps, prevState, extrArgs);
   }
+}
+
+export class PureComponent extends Component {
+  shouldComponentUpdate(nextProps, nextState) {
+    const res = !shallowEqual(this.props, nextProps) || !shallowEqual(this.state, nextState);
+    return res;
+  }
+}
+
+function shallowEqual(obj1, obj2) {
+  if (obj1 === obj2) {
+    return true;
+  }
+
+  if (typeof obj1 !== 'object' || obj1 === null || typeof obj2 !== 'object' || obj2 === null) {
+    return false;
+  }
+
+  const keys1 = Object.keys(obj1);
+  const keys2 = Object.keys(obj2);
+
+  if (keys1.length !== keys2.length) {
+    return false;
+  }
+
+  for (const key in obj1) {
+    if (key === 'children') {
+      continue;
+    }
+
+    if (obj2[key] !== obj1[key]) {
+      return false;
+    }
+  }
+  return true;
+}
+
+export function memo(FunctionComponent, compare: (prevProps, nextProps) => boolean) {
+  if (compare) {
+    return class extends Component {
+      shouldComponent(nextProps) {
+        return compare(this.props, nextProps);
+      }
+      render() {
+        return FunctionComponent(this.props);
+      }
+    };
+  }
+
+  return class extends PureComponent {
+    render() {
+      return FunctionComponent(this.props);
+    }
+  };
 }

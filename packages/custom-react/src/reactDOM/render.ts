@@ -4,14 +4,22 @@ import { updateProps } from "./updateProps";
 import { Component } from "../react/Component";
 import { findDOM } from './findDOM';
 
+export let scheduleUpdate = null;
+
 export function render(reactNode: ReactNode, container: HTMLElement) {
   mount(reactNode, container);
+  scheduleUpdate = () => {
+    compareTwoVDom(container, reactNode, reactNode);
+  };
 }
 
 function mount(reactNode: ReactNode, container: HTMLElement) {
   const dom = createDOM(reactNode);
 
   container.appendChild(dom);
+
+  // 插入后才调用componentDidMount
+  dom.componentDidMount?.();
 }
 
 function renderChildren(children: ReactNode[], container: HTMLElement) {
@@ -27,10 +35,16 @@ function mountClassComponent(reactNode: ClassReactNode) {
   // 创建实例。走类组件的constructor
   const instance = new Type(props);
 
-  // 组件将要挂载
-  if (instance.componentWillMount) {
-    instance.componentWillMount();
+  //@ts-ignore
+  if (Type.contextType) {
+    //@ts-ignore
+    instance.context = Type.contextType.Provider._value;
   }
+
+  instance.ownReactNode = reactNode;
+
+  // 组件将要挂载
+  // instance.componentWillMount?.();
 
   reactNode.instance = instance;
 
@@ -41,6 +55,12 @@ function mountClassComponent(reactNode: ClassReactNode) {
 
   // 生成真实dom
   const dom = createDOM(renderReactNode);
+
+  //@ts-ignore
+  if (instance.componentDidMount) {
+    //@ts-ignore
+    dom.componentDidMount = instance.componentDidMount.bind(instance);
+  }
 
   instance.dom = dom;
 
@@ -55,13 +75,13 @@ function mountFunctionComponent(reactNode: FunctionReactNode) {
   // 生成真实dom
   const dom = createDOM(renderReactNode);
 
-  reactNode.dom = dom;
+  reactNode.lastRenderReactNode = renderReactNode;
 
   return dom;
 }
 
 function createDOM(reactNode: ReactNode): DOM {
-  const { type, props: { children, content }, props } = reactNode;
+  const { type, ref, props: { children, content }, props } = reactNode;
 
   if (typeof type === 'function') {
     if ((type as any as typeof Component).isReactComponent) {
@@ -90,6 +110,11 @@ function createDOM(reactNode: ReactNode): DOM {
   }
 
   reactNode.dom = dom;
+
+  // ref赋值
+  if (ref) {
+    ref.current = dom;
+  }
 
   return dom;
 }
@@ -155,7 +180,7 @@ function updateElement(oldReactNode: ReactNode, newReactNode: ReactNode) {
   if ((type as any as typeof Component).isReactComponent) {
     updateClassComponent(oldReactNode, newReactNode);
   } else {
-    updateFunctionComponent(oldReactNode, newReactNode);
+    updateFunctionComponent(oldReactNode, newReactNode as FunctionReactNode);
   }
 }
 
@@ -164,7 +189,14 @@ function updateClassComponent(oldReactNode: ReactNode, newReactNode: ReactNode) 
 
   instance.updater.emitUpdate(newReactNode.props);
 }
-function updateFunctionComponent(oldReactNode: ReactNode, newReactNode: ReactNode) { }
+function updateFunctionComponent(oldReactNode: ReactNode, newReactNode: FunctionReactNode) {
+  const parentDOM = findDOM(oldReactNode).parentNode;
+  const { type, props } = newReactNode;
+  let lastRenderReactNode = oldReactNode.lastRenderReactNode;
+  const newRenderReactNode = type(props);
+  compareTwoVDom(parentDOM, lastRenderReactNode, newRenderReactNode);
+  newReactNode.lastRenderReactNode = newRenderReactNode;
+}
 
 function getArray<T>(item): T[] {
   return Array.isArray(item) ? item : [item];
@@ -176,7 +208,7 @@ function updateChildren(parentDOM: DOM, oldReactNodeChildren: ReactNode | ReactN
 
   const maxLength = Math.max(oldReactNodeChildren.length, newReactNodeChildren.length);
   for (let i = 0; i < maxLength; i++) {
-    const newDOM = oldReactNodeChildren.find((item, index) => index > i && item && item.dom);
-    compareTwoVDom(parentDOM as HTMLElement, oldReactNodeChildren[i], newReactNodeChildren[i], (newDOM && newDOM.dom) as HTMLElement);
+    const nextDOM = oldReactNodeChildren.find((item, index) => index > i && item && item.dom);
+    compareTwoVDom(parentDOM as HTMLElement, oldReactNodeChildren[i], newReactNodeChildren[i], (nextDOM && nextDOM.dom) as HTMLElement);
   }
 }

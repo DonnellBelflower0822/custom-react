@@ -2,9 +2,10 @@ import { Props, ReactNode } from "../interface";
 import { TEXT } from "../constant";
 
 export function createElement(type, props: Props = {}, ...children): ReactNode {
-  const { key, ...extProps } = props || {};
+  const { key, ref, ...extProps } = props || {};
   const reactNode: ReactNode = {
     type,
+    ref,
     props: {
       ...extProps,
     }

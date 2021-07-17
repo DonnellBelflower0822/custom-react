@@ -8,6 +8,7 @@ type extendDOM = {
   store?: {
     [eventType: string]: () => void;
   };
+  componentDidMount?: () => void;
 };
 
 export type DOM = (HTMLElement & extendDOM) | (Text & extendDOM);
@@ -22,15 +23,18 @@ export interface ReactNode {
   type: ReactNodeType,
   props: Props,
   key?: string;
+  
+  ref?: any;
 
   // 真实的dom
   dom?: DOM;
   instance?: Component;
+  lastRenderReactNode?: ReactNode;
 }
 
 export interface ClassReactNode extends Omit<ReactNode, 'type'> {
   type: typeof Component & {
-    render: () => ReactNode;
+    render: () => ReactNode; 
   };
 }
 
