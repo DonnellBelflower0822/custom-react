@@ -75,13 +75,14 @@ class Updater<P = object, S = object> {
 
   updateClassComponent() {
     const { instance, pendingState, newProps, callbacks } = this;
-    if (pendingState.length > 0) {
+    if (newProps || pendingState.length > 0) {
       shouldUpdate<P, S>(instance, newProps, this.getState(), callbacks);
     }
   }
 }
 
 function shouldUpdate<P, S>(instance: Component<P, S>, newProps: P, nextState: S, callbacks: SetStateCallback[]) {
+  // 比较state和props是否一样
 
   if (newProps) {
     instance.props = newProps;
@@ -107,6 +108,8 @@ export class Component<P = object, S = object> {
 
   updater: Updater<P, S>;
   lastRenderReactNode: ReactNode;
+
+  componentWillMount?: () => void;
 
   constructor(props: P) {
     this.props = props;

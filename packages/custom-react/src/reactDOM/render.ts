@@ -24,8 +24,13 @@ function renderChildren(children: ReactNode[], container: HTMLElement) {
 function mountClassComponent(reactNode: ClassReactNode) {
   const { type: Type, props } = reactNode;
 
-  // 创建实例
+  // 创建实例。走类组件的constructor
   const instance = new Type(props);
+
+  // 组件将要挂载
+  if (instance.componentWillMount) {
+    instance.componentWillMount();
+  }
 
   reactNode.instance = instance;
 
@@ -157,7 +162,7 @@ function updateElement(oldReactNode: ReactNode, newReactNode: ReactNode) {
 function updateClassComponent(oldReactNode: ReactNode, newReactNode: ReactNode) {
   const instance = newReactNode.instance = oldReactNode.instance;
 
-  instance.updater.emitUpdate(newReactNode.props)
+  instance.updater.emitUpdate(newReactNode.props);
 }
 function updateFunctionComponent(oldReactNode: ReactNode, newReactNode: ReactNode) { }
 
