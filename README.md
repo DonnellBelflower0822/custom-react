@@ -901,4 +901,501 @@ export default function App() {
 - action 动作
 - subscribe 订阅
 
+## 原则
+- 单一数据源
+- state是只读：只能dispatch(action)进行修改
+- reducer使用纯函数进行修改
 
+## 基础使用
+```js
+// store.js
+import { createStore } from 'redux'
+
+export const actionType = {
+  ADD: 'ADD',
+  DESC: 'DESC',
+}
+
+// 定义reducer
+function reducer(state, action) {
+  switch (action.type) {
+    case actionType.ADD:
+      return { ...state, age: state.age + 1 }
+    case actionType.DESC:
+      return { ...state, age: state.age - 1 }
+    default:
+      return state
+  }
+}
+
+// 创建store
+const store = createStore(reducer, { name: 'allen', age: 27 })
+
+export default store
+```
+
+**使用**
+
+```js
+import React from 'react';
+import store, { actionType } from '../store/base';
+
+export default class Base extends React.Component {
+  state = {
+    // 初始化
+    name: store.getState().name,
+    age: store.getState().age,
+  }
+
+  componentDidMount() {
+    // 订阅
+    this.unsubscribe = store.subscribe(() => {
+      this.setState({
+        name: store.getState().name,
+        age: store.getState().age,
+      })
+    })
+  }
+
+  componentWillUnmount() {
+    // 取消订阅
+    this.unsubscribe()
+  }
+
+  render() {
+    return (
+      <div>
+        <h1>{this.state.name}</h1>
+        <h1>{this.state.age}</h1>
+        <button onClick={() => {
+          // 派发动作
+          store.dispatch({ type: actionType.ADD })
+        }}>+1</button>
+        <button onClick={() => {
+          store.dispatch({ type: actionType.DESC })
+        }}>-1</button>
+      </div>
+    )
+  }
+}
+```
+
+### 实现createStore
+
+> 实际就是一个订阅和发布
+
+```ts
+export default function createStore<T>(reducer: Reducer<T>, preloadedState: T) {
+  // 状态
+  let state: T = preloadedState;
+  const listeners: Listener[] = [];
+
+  // 获取状态
+  function getState() {
+    return state;
+  }
+
+  // 订阅
+  function subscribe(listener: Listener) {
+    listeners.push(listener);
+
+    return () => {
+      const index = listeners.indexOf(listener);
+      listeners.splice(index, 1);
+    };
+  }
+
+  // 派发
+  function dispatch(action: Action) {
+    // 根据action和reducer进行处理
+    state = reducer(state, action);
+    // 发布订阅
+    listeners.forEach(listener => listener());
+    return state;
+  }
+
+  // 默认会派发一次初始化动作
+  // 针对初始值分配到各个reducer的情况，就能初始化state
+  dispatch({ type: "@@REDUX/INIT" });
+
+  // 仓库
+  const store = {
+    getState,
+    subscribe,
+    dispatch
+  };
+
+  return store;
+}
+```
+
+## bindActionCreators
+
+> 简化派发事件
+
+```js
+import { bindActionCreators } from 'redux';
+
+const actionType = {
+  ADD: 'ADD',
+  DESC: 'DESC',
+}
+const actionCreators = {
+  add: (payload) => ({
+    type: actionType.ADD,
+    payload
+  }),
+  desc: (payload) => ({
+    type: actionType.DESC,
+    payload
+  })
+}
+
+const boundActions = bindActionCreators(actionCreators, store.dispatch)
+
+export default class Base extends React.Component {
+  render() {
+    return (
+      <div>
+        <h1>{this.state.age}</h1>
+        <button onClick={() => {
+          // 派发动作。简化不用传递type等
+          boundActions.add(1)
+        }}>+1</button>
+        <button onClick={() => {
+          boundActions.desc(2)
+        }}>-1</button>
+      </div>
+    )
+  }
+}
+```
+
+**实现**
+
+```ts
+/**
+ * @param actionCreators 动作创建器
+ * @param dispatch store.dispatch
+ * @returns 
+ */
+export default function bindActionCreators(actionCreators, dispatch) {
+  const bindActions = {};
+
+  for (const key in actionCreators) {
+    bindActions[key] = (...args: unknown[]) => {
+      const action = actionCreators[key].apply(this, args);
+      dispatch(action)
+    };
+  }
+
+  return bindActions;
+}
+```
+
+## combineReducers
+
+> 将多个独立reducer联合起来
+
+```js
+// store/index.js
+import { createStore } from 'redux';
+import rootReducer from './reducers';
+
+// 不在这里去初始化state。放到各自reducer身上
+const store = createStore(rootReducer)
+
+export default store
+
+// reducers/index.js
+import { combineReducers } from 'redux';
+import counter1 from './counter1';
+import counter2 from './counter2';
+const rootReducer = combineReducers({
+  counter1,
+  counter2,
+})
+export default rootReducer
+
+// reducers/counter1.js
+import { ADD1, DESC1 } from '../action-types';
+
+const initalState = {
+  name: 'allen',
+  age: 27
+}
+export default function counter1(state = initalState, action) {
+  switch (action.type) {
+    case ADD1:
+      return { ...state, age: state.age + action.payload }
+    case DESC1:
+      return { ...state, age: state.age - action.payload }
+    default:
+      return state
+  }
+}
+
+// 使用数据
+store.getState().counter1.name
+store.getState().counter1.age
+```
+
+**实现**
+
+> 把多个reducer合成一个全局的reducer
+
+```js
+export default function combineReduers(reducers) {
+  return function (state = {}, actions) {
+    const rootState = {};
+
+    for (const key in reducers) {
+      rootState[key] = reducers[key](state[key], actions);
+    }
+
+    return rootState;
+  };
+}
+```
+
+## react-redux
+
+> 主要在react组件使用上做简化。store还是原来的配方
+
+**主入口**
+
+> 使用Provider提供store
+
+```js
+import store from './store';
+import { Provider } from 'react-redux';
+import Counter1 from './counter1'
+import Counter2 from './counter2'
+
+export default function Root() {
+  return (
+    <Provider store={store}>
+      <Counter1 />
+      <Counter2 />
+    </Provider>
+  )
+}
+```
+
+**使用端**
+
+```js
+import { connect } from 'react-redux';
+import { ADD1 } from './store/action-types';
+
+function Counter1(props) {
+  return (
+    <div>
+      <h2>Counter1</h2>
+      <p>{props.name}</p>
+      <p onClick={() => {
+        props.dispatch({
+          type: ADD1,
+          payload: 4
+        })
+      }}>{props.age}</p>
+      <hr />
+    </div>
+  )
+}
+
+// 使用connect
+// mapStateToProps： 
+// mapDispatchToProps: 没传，默认会传递dispatch到组件
+export default connect((state) => (state.counter1))(Counter1)
+
+export default connect(
+  (state) => (state.counter2),
+  (dispatch) => ({
+    add(payload = 1) {
+      dispatch({
+        type: ADD2,
+        payload
+      })
+    },
+    desc(payload = 1) {
+      dispatch({
+        type: DESC2,
+        payload
+      })
+    }
+  })
+)(Counter2)
+```
+
+### react-redux.Provider
+
+```ts
+import CustomReact from 'custom-react';
+import ReduxContext from './ReduxContext';
+
+export default function Provider(props) {
+  const { store } = props;
+  return (
+    <ReduxContext.Provider value={store}>
+      {props.children}
+    </ReduxContext.Provider>
+  )
+}
+
+import CustomReact from 'custom-react';
+const ReduxContext = CustomReact.createContext();
+export default ReduxContext
+```
+
+### connect
+
+- 获取ReduxContext上下文数据
+- 根据mapStateToProps和mapDispatchToProps准备好props数据
+- 在componentDidMount订阅store更新
+- 在componentWillUnmount取消订阅
+- store更新则将函数组件或类组件强制刷新
+
+**函数组件版本**
+
+```ts
+export default function connect(mapStateToProps, mapDispatchToProps) {
+  return function (oldComponent) {
+    return function (props) {
+      // 使用redux的store
+      const { store } = CustomReact.useContext(ReduxContext);
+
+      // 映射
+      const state = store.getState();
+      const stateProps = mapStateToProps(state);
+
+      // 将dispatch放到props上
+      const dispatchProps = CustomReact.useMemo(() => {
+        if (typeof mapDispatchToProps === 'object') {
+          // 绑定dispatch
+          return CustomRedux.bindActionCreators(mapDispatchToProps, store.dispatch);
+        }
+
+        if (typeof mapDispatchToProps === 'function') {
+          // 如果是函数值调用，并且将dispatch作为参数
+          return mapDispatchToProps(store.dispatch);
+        }
+
+        // 没有传递则传递dispatch
+        return {
+          dispatch: store.dispatch
+        };
+      }, [store.dispatch]);
+
+      // 强制更新
+      const [, forceUpdate] = CustomReact.useReducer(x => x + 1, 0);
+
+      CustomReact.useEffect(() => {
+        // 订阅更新
+        const unsubscribe = store.subscribe(forceUpdate);
+        // 销毁
+        return unsubscribe;
+      }, [store]);
+
+      return CustomReact.createElement(oldComponent,
+        { ...props, ...stateProps, ...dispatchProps }
+      );
+    };
+  };
+}
+```
+
+**类组件版本**
+
+```ts
+export function connect2(mapStateToProps, mapDispatchToProps) {
+  return function (oldComponent) {
+    return class extends CustomReact.Component {
+      static contextType = ReduxContext;
+      unsubscibe: any;
+      componentDidMount() {
+        // 订阅
+        this.unsubscibe = this.context.store.subscribe(() => {
+          // 强制刷新
+          this.setState({});
+        });
+      }
+      componentWillUnmount() {
+        // 销毁
+        this.unsubscibe();
+      }
+      render() {
+        const { getState, dispatch } = this.context.store;
+        const state = getState();
+        const stateProps = mapStateToProps(state);
+        const dispatchProps = CustomRedux.bindActionCreators(mapDispatchToProps, dispatch);
+
+        return CustomReact.createElement(
+          oldComponent,
+          { ...this.props, ...stateProps, ...dispatchProps }
+        );
+      }
+    };
+  };
+}
+```
+
+### react-redux的hook
+
+```js
+function Counter1() {
+  // 获取dispatch。类比mapDispatchToProps
+  const dispatch = useDispatch()
+  // 类比：mapStateToProps
+  const counter1 = useSelector(state => state.counter1)
+  return (
+    <div>
+      <h2>Counter1</h2>
+      <p>{counter1.name}</p>
+      <p onClick={() => {
+        dispatch({
+          type: ADD1,
+          payload: 4
+        })
+      }}>{counter1.age}</p>
+      <hr />
+    </div>
+  )
+}
+```
+
+**useDispatch**
+
+```ts
+import customReact from 'custom-react';
+import ReduxContext from '../ReduxContext';
+
+export function useDispatch() {
+  const { store } = customReact.useContext(ReduxContext);
+  return store.dispatch;
+}
+```
+
+**useSelector**
+
+```ts
+import customReact from 'custom-react';
+import ReduxContext from '../ReduxContext';
+
+export function useSelector(mapStateToProps) {
+  // 获取ReduxContext上下文数据
+  const { store } = customReact.useContext(ReduxContext);
+  const state = store.getState();
+
+  // 拿到mapStateToProps后的数据
+  const stateProps = mapStateToProps(state);
+
+  const [, forceUpdate] = customReact.useReducer(x => x + 1, 0);
+  customReact.useEffect(() => {
+    // 订阅store更改 -> 组件刷新
+    return store.subscribe(forceUpdate);
+  }, [store.subscribe]);
+
+  return stateProps;
+}
+```
