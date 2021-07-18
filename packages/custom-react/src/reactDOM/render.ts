@@ -124,7 +124,6 @@ function createDOM(reactNode: ReactNode): DOM {
   return dom;
 }
 
-
 export function compareTwoVDom(parentDOM: HTMLElement, oldReactNode: ReactNode, newReactNode: ReactNode, nextDOM?: HTMLElement) {
   // 新旧节点都为null
   if (!newReactNode && !oldReactNode) {

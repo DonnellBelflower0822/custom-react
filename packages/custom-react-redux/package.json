@@ -1,0 +1,16 @@
+{
+  "name": "custom-react-redux",
+  "version": "1.0.0",
+  "main": "src/index",
+  "license": "MIT",
+  "buildOptions": {
+    "name": "CustomReactRedux",
+    "format": [
+      "global"
+    ],
+    "external": [
+      "custom-react",
+      "custom-redux"
+    ]
+  }
+}

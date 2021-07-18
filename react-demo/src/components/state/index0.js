@@ -7,9 +7,12 @@ export default class Click extends React.PureComponent {
   click = () => {
     console.log(this.state.count)
     this.setState({
-      count: 1
+      count: 2
     })
     console.log(this.state.count)
+  }
+  componentDidUpdate() {
+    console.log('componentDidUpdate')
   }
   render() {
     const { count } = this.state

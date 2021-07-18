@@ -132,7 +132,7 @@ export class Component<P = object, S = object> {
     this.updater = new Updater<P, S>(this);
   }
 
-  setState(partialState: PartialState<S, P>, callback: SetStateCallback) {
+  setState(partialState: PartialState<S, P>, callback?: SetStateCallback) {
     this.updater.addState(partialState, callback);
   }
 
@@ -197,7 +197,7 @@ function shallowEqual(obj1, obj2) {
 export function memo(FunctionComponent, compare: (prevProps, nextProps) => boolean) {
   if (compare) {
     return class extends Component {
-      shouldComponent(nextProps) {
+      shouldComponentUpdate(nextProps) {
         return compare(this.props, nextProps);
       }
       render() {

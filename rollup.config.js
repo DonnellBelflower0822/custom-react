@@ -42,6 +42,7 @@ function createConfig(format, output) {
   return {
     input: resolve('src/index.ts'),
     output,
+    external: buildOptions.external || [],
     plugins: [
       json(),
       ts({

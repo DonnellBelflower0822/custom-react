@@ -6,8 +6,6 @@ export default function App() {
   React.useEffect(() => {
     ref.current = count
     setTimeout(() => {
-      // 此时获取不到当时最新的值
-      // console.log(count)
       console.log(ref.current)
     }, 3000);
   })

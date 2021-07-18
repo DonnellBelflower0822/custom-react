@@ -1,4 +1,4 @@
-export function createContext(initialValue) {
+export function createContext(initialValue?) {
   Provider._value = initialValue;
   function Provider(props) {
     // 让对象指向不变

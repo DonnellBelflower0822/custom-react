@@ -9,8 +9,10 @@ function App() {
       clearInterval(timer)
     }
   })
+  const [a] = CustomReact.useState(1)
   return (
-    CustomReact.createElement('div', {}, count)
+    CustomReact.createElement('div', {
+    }, count + '    ' + a)
   )
 }
 
