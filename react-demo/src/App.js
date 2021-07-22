@@ -4,6 +4,9 @@
 // import Com from './components/state/index2'
 // import Com from './components/state/index3'
 // import Com from './components/state/index4'
+// import Com from './components/state/index5'
+
+import Com from './components/fiber'
 
 // import Com from './components/lifecycle'
 
@@ -11,7 +14,7 @@
 
 // import Com from './components/hook/useState'
 // import Com from './components/hook/useReducer'
-import Com from './components/hook/setStateUseNew'
+// import Com from './components/hook/setStateUseNew'
 // import Com from './components/hook/useEffect'
 // import Com from './components/hook/useNewState'
 // import Com from './components/hook/setState'

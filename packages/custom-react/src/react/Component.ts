@@ -161,12 +161,11 @@ export class Component<P = object, S = object> {
 
 export class PureComponent extends Component {
   shouldComponentUpdate(nextProps, nextState) {
-    const res = !shallowEqual(this.props, nextProps) || !shallowEqual(this.state, nextState);
-    return res;
+    return !shallowEqual(this.props, nextProps) || !shallowEqual(this.state, nextState);
   }
 }
 
-function shallowEqual(obj1, obj2) {
+function shallowEqual(obj1: unknown, obj2: unknown) {
   if (obj1 === obj2) {
     return true;
   }
@@ -178,6 +177,7 @@ function shallowEqual(obj1, obj2) {
   const keys1 = Object.keys(obj1);
   const keys2 = Object.keys(obj2);
 
+  // 比较长度
   if (keys1.length !== keys2.length) {
     return false;
   }
@@ -191,6 +191,7 @@ function shallowEqual(obj1, obj2) {
       return false;
     }
   }
+
   return true;
 }
 
