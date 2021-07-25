@@ -5,6 +5,7 @@ export default class Click extends React.PureComponent {
     count: 1
   }
   click = () => {
+    console.log(this)
     console.log(this.state.count)
     this.setState({
       count: 2

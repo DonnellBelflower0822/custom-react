@@ -10,7 +10,7 @@ export function findDOM(vdom: ReactNode) {
 
   let dom;
   if (typeof type === 'function') {
-    if ((type as any as typeof Component).isReactComponent) {
+    if ((type as any as Component).isReactComponent) {
       dom = findDOM(vdom.instance as any as ReactNode);
     } else {
       dom = findDOM(vdom.lastRenderReactNode);

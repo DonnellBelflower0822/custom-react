@@ -1,17 +1,19 @@
 import React from 'react'
 export default function App() {
   const [count, setCount] = React.useState(0)
-  const ref = React.useRef(count)
+  const countRef = React.useRef()
+  // const countRef = React.createRef()
 
   React.useEffect(() => {
-    ref.current = count
-    setTimeout(() => {
-      console.log(ref.current)
-    }, 3000);
+    countRef.current = count
   })
 
   function handler() {
     setCount(count + 1)
+    setTimeout(() => {
+      console.log(count)  // 0
+      console.log(countRef.current)  // 永远是最新值
+    }, 3000)
   }
 
   // 页面最后显示的是1

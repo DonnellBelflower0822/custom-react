@@ -1,11 +1,13 @@
-export function createContext(initialValue?) {
+export function createContext(initialValue?: unknown) {
   Provider._value = initialValue;
+
   function Provider(props) {
     // 让对象指向不变
     if (!Provider._value) {
       Provider._value = {};
     }
     Provider._value = Object.assign(Provider._value, props.value);
+
     return props.children;
   }
 

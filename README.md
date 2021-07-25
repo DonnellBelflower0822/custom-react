@@ -247,6 +247,7 @@ class Eye extends CustomReact.Component {
     console.log(this.context)
   }
 }
+
 // 消费: 函数组件
 <MyContext.Consumer>
   {(props)=><Sub {...props}/>}
@@ -379,9 +380,9 @@ export function memo(FunctionComponent, compare?: (prevProps, nextProps) => bool
   - 自定义hook中调用其他hook
 
 ### 原理
-- 会维护为一个对应的数组`hookState`
-- 一个索引`hookIndex`
-- 会根据索引去 初始化或获取之前的值
+- 维护为一个`hookState`的数组
+- 维护一个`hookIndex`索引
+- 会根据索引去 初始化或获取原来的值
 
 ```js
 const hookState = [];

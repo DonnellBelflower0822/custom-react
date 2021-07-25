@@ -11,6 +11,12 @@ export function createElement(type, props: Props = {}, ...children): ReactNode {
     }
   };
 
+  /**
+   * createElement('div',{},'hello')
+   * createElement('div',{},createElement('div',{},))
+   * createElement('div',{},createElement('div',{},),createElement('div',{}))
+   * createElement('div',{},[createElement('div',{},),createElement('div',{})])
+   */
   if (children.length === 1) {
     if (children[0] !== undefined) {
       reactNode.props.children = wrapChildren(children[0]);

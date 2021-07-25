@@ -14,8 +14,10 @@ export function render(reactNode: ReactNode, container: HTMLElement) {
 }
 
 function mount(reactNode: ReactNode, container: HTMLElement) {
+  // 根据虚拟dom创建真实dom
   const dom = createDOM(reactNode);
 
+  // 将创建的真实DOM插入到父容器里面
   container.appendChild(dom);
 
   // 插入后才调用componentDidMount
@@ -52,6 +54,15 @@ function mountClassComponent(reactNode: ClassReactNode) {
   // instance.componentWillMount?.();
 
   reactNode.instance = instance;
+  // @ts-ignore
+  const { getDerivedStateFromProps } = instance.ownReactNode.type;
+  if (getDerivedStateFromProps) {
+    const partialState = getDerivedStateFromProps(instance.props, instance.state);
+    instance.state = {
+      ...instance.state,
+      ...partialState,
+    };
+  }
 
   // 调用render
   const renderReactNode = (instance as any as typeof Component & { render: () => ReactNode; }).render();
@@ -85,11 +96,12 @@ function mountFunctionComponent(reactNode: FunctionReactNode) {
   return dom;
 }
 
+// 根据虚拟dom创建真实dom
 function createDOM(reactNode: ReactNode): DOM {
   const { type, ref, props: { children, content }, props } = reactNode;
 
   if (typeof type === 'function') {
-    if ((type as any as typeof Component).isReactComponent) {
+    if ((type as any as Component).isReactComponent) {
       return mountClassComponent(reactNode as any as ClassReactNode);
     }
 
@@ -181,7 +193,7 @@ function updateElement(oldReactNode: ReactNode, newReactNode: ReactNode) {
     return;
   }
 
-  if ((type as any as typeof Component).isReactComponent) {
+  if ((type as any as Component).isReactComponent) {
     updateClassComponent(oldReactNode, newReactNode);
   } else {
     updateFunctionComponent(oldReactNode, newReactNode as FunctionReactNode);
@@ -202,7 +214,7 @@ function updateFunctionComponent(oldReactNode: ReactNode, newReactNode: Function
   newReactNode.lastRenderReactNode = newRenderReactNode;
 }
 
-function getArray<T>(item): T[] {
+function getArray<T>(item: T | T[]): T[] {
   return Array.isArray(item) ? item : [item];
 }
 

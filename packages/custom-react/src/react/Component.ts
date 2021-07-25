@@ -118,7 +118,7 @@ function shouldUpdate<P, S>(instance: Component<P, S>, newProps: P, nextState: S
 }
 
 export class Component<P = object, S = object> {
-  static isReactComponent = true;
+  isReactComponent = true;
   props: P;
   state: S;
 

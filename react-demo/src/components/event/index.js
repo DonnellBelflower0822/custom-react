@@ -12,6 +12,11 @@
 import React from 'react';
 
 export default class Click extends React.PureComponent {
+  componentDidMount() {
+    document.addEventListener('click', () => {
+      console.log('origin')
+    })
+  }
   click(e) {
     console.log(e, this)
   }
